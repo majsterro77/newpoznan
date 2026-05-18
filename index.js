@@ -304,7 +304,7 @@ client.on(Events.InteractionCreate, async interaction => {
         const powod = options.getString('powod');
 
         const channelKeywords = typ === 'zawieszenie' ? CHANNEL_KEYWORDS.ZAWIESZENIA : CHANNEL_KEYWORDS.PLUSY_MINUSY;
-        const channel = findChannelByKeywords(guild, channelKeywords);
+        const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.PLUSY_MINUSY);
 
         if (!channel) return interaction.reply({ content: 'Nie zlokalizowano właściwego kanału kar.', ephemeral: true });
 
