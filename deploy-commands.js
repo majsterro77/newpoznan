@@ -192,7 +192,9 @@ const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
       { body: commands }
     );
     console.log('Komendy zostały pomyślnie zarejestrowane na serwerze.');
+    process.exit(0);
   } catch (error) {
     console.error('Błąd podczas rejestracji komend:', error);
+    process.exit(1);
   }
 })();
