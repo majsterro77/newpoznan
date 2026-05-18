@@ -11,7 +11,6 @@ const DOWODY_FILE = path.join(__dirname, 'data', 'dowody.json');
 // KONFIGURACJA UPRAWNIEŃ I RÓL
 // ==========================================
 const ROLES = {
-  // Posiadanie uprawnień ADMINISTRATORA na serwerze automatycznie omija ten warunek
   ROLE_ADMIN: 'TUTAJ_WPISZ_ID_ROLI_ZARZADU_LUB_ADMINA', 
   ROLE_EGZAMINATOR: 'TUTAJ_WPISZ_ID_ROLI_EGZAMINATORA',
   ROLE_TEORIA_ZDANA: '1505614464798425124'
@@ -303,8 +302,9 @@ client.on(Events.InteractionCreate, async interaction => {
         const typ = options.getString('typ');
         const powod = options.getString('powod');
 
+        // TU BYŁ BŁĄD LOGICZNY - NAPRAWIONE:
         const channelKeywords = typ === 'zawieszenie' ? CHANNEL_KEYWORDS.ZAWIESZENIA : CHANNEL_KEYWORDS.PLUSY_MINUSY;
-        const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.PLUSY_MINUSY);
+        const channel = findChannelByKeywords(guild, channelKeywords);
 
         if (!channel) return interaction.reply({ content: 'Nie zlokalizowano właściwego kanału kar.', ephemeral: true });
 
