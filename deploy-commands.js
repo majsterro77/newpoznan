@@ -179,6 +179,58 @@ const commands = [
     .addStringOption(option =>
       option.setName('powod')
         .setDescription('Powód kary')
+        .setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('urlopdc')
+    .setDescription('Zgłoś urlop administracyjny/frakcyjny (DC)')
+    .addStringOption(option =>
+      option.setName('od')
+        .setDescription('Data rozpoczęcia urlopu')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('do')
+        .setDescription('Data zakończenia urlopu')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('powod')
+        .setDescription('Powód urlopu')
+        .setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('awansdc')
+    .setDescription('Zgłoś awans użytkownika (DC)')
+    .addUserOption(option =>
+      option.setName('uzytkownik')
+        .setDescription('Awansowany użytkownik')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('nowa_ranga')
+        .setDescription('Nowa ranga użytkownika')
+        .setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('degraddc')
+    .setDescription('Zgłoś degradację użytkownika (DC)')
+    .addUserOption(option =>
+      option.setName('uzytkownik')
+        .setDescription('Degradowany użytkownik')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('nowa_ranga')
+        .setDescription('Nowa ranga użytkownika')
+        .setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('zawieszeniedc')
+    .setDescription('Zgłoś zawieszenie pracownika administracji (DC)')
+    .addUserOption(option =>
+      option.setName('uzytkownik')
+        .setDescription('Zawieszany użytkownik')
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('powod')
+        .setDescription('Powód zawieszenia')
         .setRequired(true))
 ].map(command => command.toJSON());
 
