@@ -8,11 +8,11 @@ dotenv.config();
 const DOWODY_FILE = path.join(__dirname, 'data', 'dowody.json');
 
 // ==========================================
-// KONFIGURACJA UPRAWNIEŃ I RÓL
+// KONFIGURACJA UPRAWNIEŃ I RÓL (WPISZ ID)
 // ==========================================
 const ROLES = {
-  ROLE_ADMIN: '1505995645662531855', 
-  ROLE_EGZAMINATOR: '1505614464895156347',
+  ROLE_ADMIN: 'TUTAJ_WPISZ_ID_ROLI_ZARZADU_LUB_ADMINA', 
+  ROLE_EGZAMINATOR: 'TUTAJ_WPISZ_ID_ROLI_EGZAMINATORA',
   ROLE_TEORIA_ZDANA: '1505614464798425124'
 };
 
@@ -25,18 +25,24 @@ const DRIVING_LICENSES = {
   'T': '1505614464781914131'
 };
 
-// Słowa kluczowe do inteligentnego szukania kanałów (ignoruje emotki i kreski ozdobne)
-const CHANNEL_KEYWORDS = {
-  STWORZ_DOWOD: ['stworz-dowod', 'stwórz-dowód', 'wyrob-dowod'],
-  DOWOD_OSOBISTY: ['dowod-osobisty', 'dowód-osobisty'],
-  ZAPISY: ['zapisy'],
-  WYNIKI: ['wyniki'],
-  UPDATE_EH: ['update-eh'],
-  CHANGE_LOG: ['change-log'],
-  URLOPY: ['urlopy', 'urlopy-dc'],
-  AWANSE_DEGRADACJE: ['awanse-degrad', 'awanse-degradacje'],
-  PLUSY_MINUSY: ['plusy-minusy'],
-  ZAWIESZENIA: ['zawieszenia']
+// ==========================================
+// STRUKTURA KANAŁÓW OPARTA WYŁĄCZNIE NA ID!
+// ==========================================
+const CHANNELS = {
+  STWORZ_DOWOD: '1505614465519980743',
+  DOWOD_OSOBISTY: '1505668965995642910',
+  ZAPISY: '1505614468007067803',
+  WYNIKI: '1505614468007067805',
+  UPDATE_EH: '1505614465696272514',
+  CHANGE_LOG: '1505614465863909468',
+  URLOPY: '1505614466438402343',
+  AWANSE_DEGRADACJE: '1505614466165903469',
+  PLUSY_MINUSY: '1505614466438402339',
+  ZAWIESZENIA: '1505614466438402344',
+  URLOPY_DC: '1505614466438402343',
+  AWANSE_DEGRADACJE_DC: '1505614466165903469',
+  PLUSY_MINUSY_DC: '1505614466438402339',
+  ZAWIESZENIA_DC: '1505614466438402344'
 };
 
 function ensureDowodyFile() {
@@ -56,15 +62,6 @@ function loadDowody() {
 
 function saveDowody(data) {
   fs.writeFileSync(DOWODY_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// Funkcja czyszcząca nazwy kanałów z ozdobników, spacji i emotek, aby bot zawsze trafił w odpowiednie miejsce
-function findChannelByKeywords(guild, keywords) {
-  return guild.channels.cache.find(channel => {
-    if (!channel.isTextBased()) return false;
-    const cleanName = channel.name.toLowerCase().replace(/[^a-z0-9-+]/g, '');
-    return keywords.some(keyword => cleanName.includes(keyword.replace(/[^a-z0-9-+]/g, '')));
-  });
 }
 
 function checkAdmin(member) {
@@ -110,9 +107,8 @@ client.on(Events.InteractionCreate, async interaction => {
         const subcommand = options.getSubcommand();
 
         if (subcommand === 'stworz') {
-          const validChannel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.STWORZ_DOWOD);
-          if (validChannel && interaction.channelId !== validChannel.id) {
-            return interaction.reply({ content: `Tej komendy możesz użyć tylko na kanale <#${validChannel.id}>.`, ephemeral: true });
+          if (CHANNELS.STWORZ_DOWOD && interaction.channelId !== CHANNELS.STWORZ_DOWOD) {
+            return interaction.reply({ content: `Tej komendy możesz użyć tylko na wyznaczonym kanale: <#${CHANNELS.STWORZ_DOWOD}>.`, ephemeral: true });
           }
 
           const modal = new ModalBuilder().setCustomId('modal-dowod-rp').setTitle('Tworzenie dowodu osobistego RP');
@@ -165,7 +161,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
         if (subcommand === 'zapisz') {
           const kat = options.getString('kategoria');
-          const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.ZAPISY);
+          const channel = guild.channels.cache.get(CHANNELS.ZAPISY);
+          if (!channel) return interaction.reply({ content: 'Błąd: Kanał zapisów nie został skonfigurowany prawidłowo za pomocą ID.', ephemeral: true });
           
           const embed = createEmbed({
             title: '🚗 NOWY ZAPIS NA EGZAMIN',
@@ -174,13 +171,14 @@ client.on(Events.InteractionCreate, async interaction => {
             fields: [{ name: '📇 Oczekiwana Kategoria', value: `Kat. ${kat}` }]
           });
 
-          if (channel) await channel.send({ embeds: [embed] });
+          await channel.send({ embeds: [embed] });
           return interaction.reply({ content: `Zapisano kursanta na egzamin kategorii ${kat}. Log wysłany.`, ephemeral: true });
         }
 
         if (subcommand === 'teoria') {
           const wynik = options.getString('wynik');
-          const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.WYNIKI);
+          const channel = guild.channels.cache.get(CHANNELS.WYNIKI);
+          if (!channel) return interaction.reply({ content: 'Błąd: Kanał wyników nie został skonfigurowany prawidłowo za pomocą ID.', ephemeral: true });
           const status = wynik === 'zdany';
 
           const embed = createEmbed({
@@ -189,7 +187,7 @@ client.on(Events.InteractionCreate, async interaction => {
             description: `Kursant: ${targetMember}\nWynik części teoretycznej: **${wynik.toUpperCase()}**`
           });
 
-          if (channel) await channel.send({ embeds: [embed] });
+          await channel.send({ embeds: [embed] });
           if (status) {
             const rolaTeorii = guild.roles.cache.get(ROLES.ROLE_TEORIA_ZDANA);
             if (rolaTeorii) await targetMember.roles.add(rolaTeorii).catch(() => null);
@@ -201,7 +199,8 @@ client.on(Events.InteractionCreate, async interaction => {
           const kat = options.getString('kategoria');
           const wynik = options.getString('wynik');
           const uwagi = options.getString('uwagi');
-          const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.WYNIKI);
+          const channel = guild.channels.cache.get(CHANNELS.WYNIKI);
+          if (!channel) return interaction.reply({ content: 'Błąd: Kanał wyników nie został skonfigurowany prawidłowo za pomocą ID.', ephemeral: true });
           const status = wynik === 'zdany';
 
           const embed = createEmbed({
@@ -214,7 +213,7 @@ client.on(Events.InteractionCreate, async interaction => {
             ]
           });
 
-          if (channel) await channel.send({ embeds: [embed] });
+          await channel.send({ embeds: [embed] });
 
           if (status) {
             const roleId = DRIVING_LICENSES[kat];
@@ -235,10 +234,10 @@ client.on(Events.InteractionCreate, async interaction => {
         const typ = options.getString('typ');
         const tresc = options.getString('tresc');
 
-        const channelKeywords = typ === 'gra' ? CHANNEL_KEYWORDS.UPDATE_EH : CHANNEL_KEYWORDS.CHANGE_LOG;
-        const channel = findChannelByKeywords(guild, channelKeywords);
+        const channelId = typ === 'gra' ? CHANNELS.UPDATE_EH : CHANNELS.CHANGE_LOG;
+        const channel = guild.channels.cache.get(channelId);
 
-        if (!channel) return interaction.reply({ content: 'Nie znaleziono odpowiedniego kanału dla ogłoszeń.', ephemeral: true });
+        if (!channel) return interaction.reply({ content: 'Nie znaleziono docelowego ID kanału dla ogłoszeń.', ephemeral: true });
 
         const embed = createEmbed({
           title: typ === 'gra' ? '📢 AKTUALIZACJE WYSPY (IC)' : '📢 ZMIANY DISCORD (OOC)',
@@ -255,12 +254,12 @@ client.on(Events.InteractionCreate, async interaction => {
         const od = options.getString('od');
         const doDate = options.getString('do');
         const powod = options.getString('powod');
-        const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.URLOPY);
+        const channel = guild.channels.cache.get(CHANNELS.URLOPY);
 
-        if (!channel) return interaction.reply({ content: 'Nie znaleziono odpowiedniego kanału dla urlopów.', ephemeral: true });
+        if (!channel) return interaction.reply({ content: 'Nie znaleziono docelowego ID kanału dla urlopów.', ephemeral: true });
 
         const embed = createEmbed({
-          title: '📅 ZGŁOSZENIE URLOPU PRZEZ CZŁONKA EKIPY',
+          title: '📅 ZGŁOSZENIE URLOPU PRZEZ CZŁONKA ADMINISTRACJI',
           color: 0xe67e22,
           fields: [
             { name: '👤 Pracownik', value: `${interaction.user}`, inline: true },
@@ -278,13 +277,40 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.reply({ content: 'Urlop pomyślnie zapisany w systemie kadrowym.', ephemeral: true });
       }
 
+      if (commandName === 'urlopdc') {
+        const od = options.getString('od');
+        const doDate = options.getString('do');
+        const powod = options.getString('powod');
+        const channel = guild.channels.cache.get(CHANNELS.URLOPY_DC);
+
+        if (!channel) return interaction.reply({ content: 'Nie znaleziono docelowego ID kanału dla urlopów DC.', ephemeral: true });
+
+        const embed = createEmbed({
+          title: '📅 ZGŁOSZENIE URLOPU DC PRZEZ CZŁONKA ADMINISTRACJI',
+          color: 0xe67e22,
+          fields: [
+            { name: '👤 Pracownik', value: `${interaction.user}`, inline: true },
+            { name: '⏳ Czas Trwania', value: `Od ${od} do ${doDate}`, inline: true },
+            { name: '❓ Powód', value: powod }
+          ]
+        });
+
+        await channel.send({ embeds: [embed] });
+        
+        const currentName = member.displayName;
+        if (!currentName.startsWith('[URLOP DC]')) {
+          await member.setNickname(`[URLOP DC] ${currentName}`).catch(() => null);
+        }
+        return interaction.reply({ content: 'Urlop DC pomyślnie zapisany w systemie kadrowym.', ephemeral: true });
+      }
+
       if (commandName === 'awans' || commandName === 'degrad') {
         if (!checkAdmin(member)) return interaction.reply({ content: 'Brak uprawnień kadrowych.', ephemeral: true });
         const nowaRanga = options.getString('nowa_ranga');
         const isAwans = commandName === 'awans';
-        const channel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.AWANSE_DEGRADACJE);
+        const channel = guild.channels.cache.get(CHANNELS.AWANSE_DEGRADACJE);
 
-        if (!channel) return interaction.reply({ content: 'Brak kanału kadrowego awansów/degradacji.', ephemeral: true });
+        if (!channel) return interaction.reply({ content: 'Nie skonfigurowano ID kanału awansów/degradacji.', ephemeral: true });
 
         const embed = createEmbed({
           title: isAwans ? '📈 ZMIANY KADROWE: AWANS SŁUŻBOWY' : '📉 ZMIANY KADROWE: DEGRADACJA SŁUŻBOWA',
@@ -297,16 +323,34 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.reply({ content: 'Zmiana stopnia została opublikowana.', ephemeral: true });
       }
 
+      if (commandName === 'awansdc' || commandName === 'degraddc') {
+        if (!checkAdmin(member)) return interaction.reply({ content: 'Brak uprawnień kadrowych.', ephemeral: true });
+        const nowaRanga = options.getString('nowa_ranga');
+        const isAwans = commandName === 'awansdc';
+        const channel = guild.channels.cache.get(CHANNELS.AWANSE_DEGRADACJE_DC);
+
+        if (!channel) return interaction.reply({ content: 'Nie skonfigurowano ID kanału awansów/degradacji DC.', ephemeral: true });
+
+        const embed = createEmbed({
+          title: isAwans ? '📈 ZMIANY KADROWE DC: AWANS SŁUŻBOWY' : '📉 ZMIANY KADROWE DC: DEGRADACJA SŁUŻBOWA',
+          color: isAwans ? 0x2ecc71 : 0xe74c3c,
+          description: `Funkcjonariusz/Pracownik: ${targetMember}\nNowy stopień służbowy: **${nowaRanga}**`,
+          footer: `Zatwierdził: ${interaction.user.tag}`
+        });
+
+        await channel.send({ embeds: [embed] });
+        return interaction.reply({ content: 'Zmiana stopnia DC została opublikowana.', ephemeral: true });
+      }
+
       if (commandName === 'kara') {
         if (!checkAdmin(member)) return interaction.reply({ content: 'Brak uprawnień moderskich.', ephemeral: true });
         const typ = options.getString('typ');
         const powod = options.getString('powod');
 
-        // TU BYŁ BŁĄD LOGICZNY - NAPRAWIONE:
-        const channelKeywords = typ === 'zawieszenie' ? CHANNEL_KEYWORDS.ZAWIESZENIA : CHANNEL_KEYWORDS.PLUSY_MINUSY;
-        const channel = findChannelByKeywords(guild, channelKeywords);
+        const channelId = typ === 'zawieszenie' ? CHANNELS.ZAWIESZENIA : CHANNELS.PLUSY_MINUSY;
+        const channel = guild.channels.cache.get(channelId);
 
-        if (!channel) return interaction.reply({ content: 'Nie zlokalizowano właściwego kanału kar.', ephemeral: true });
+        if (!channel) return interaction.reply({ content: 'Nie zlokalizowano właściwego ID kanału kar.', ephemeral: true });
 
         const embed = createEmbed({
           title: typ === 'zawieszenie' ? '⛔ ZAWIESZENIE PRACOWNIKA' : '⚠️ WPIS DYSCYPLINARNY',
@@ -322,6 +366,27 @@ client.on(Events.InteractionCreate, async interaction => {
         await channel.send({ embeds: [embed] });
         return interaction.reply({ content: 'Kara dyscyplinarna została pomyślnie nałożona.', ephemeral: true });
       }
+
+      if (commandName === 'zawieszeniedc') {
+        if (!checkAdmin(member)) return interaction.reply({ content: 'Brak uprawnień moderskich.', ephemeral: true });
+        const powod = options.getString('powod');
+        const channel = guild.channels.cache.get(CHANNELS.ZAWIESZENIA_DC);
+
+        if (!channel) return interaction.reply({ content: 'Nie zlokalizowano właściwego ID kanału zawieszenia DC.', ephemeral: true });
+
+        const embed = createEmbed({
+          title: '⛔ ZAWIESZENIE PRACOWNIKA ADMINISTRACJI (DC)',
+          color: 0xce1126,
+          fields: [
+            { name: '👤 Zawieszony', value: `${targetMember}`, inline: true },
+            { name: '📝 Powód zawieszenia', value: powod }
+          ],
+          footer: `Wystawił: ${interaction.user.tag}`
+        });
+
+        await channel.send({ embeds: [embed] });
+        return interaction.reply({ content: 'Zawieszenie pracownika administracji zostało pomyślnie nałożone.', ephemeral: true });
+      }
     }
 
     // 4. OBSŁUGA ZATWIERDZANIA OKIEN MODALNYCH (MODAL SUBMIT)
@@ -335,8 +400,8 @@ client.on(Events.InteractionCreate, async interaction => {
       dowody[interaction.user.id] = { imie, nazwisko, dataUrodzenia, pochodzenie, createdAt: new Date().toISOString() };
       saveDowody(dowody);
 
-      const targetChannel = findChannelByKeywords(guild, CHANNEL_KEYWORDS.DOWOD_OSOBISTY);
-      if (!targetChannel) return interaction.reply({ content: 'Błąd systemu: nie znaleziono kanału docelowego dla dowodów.', ephemeral: true });
+      const targetChannel = guild.channels.cache.get(CHANNELS.DOWOD_OSOBISTY);
+      if (!targetChannel) return interaction.reply({ content: 'Błąd systemu: nie znaleziono kanału docelowego dla dowodów (błędne ID).', ephemeral: true });
 
       const embed = createEmbed({
         title: '💳 WYGENEROWANO NOWY DOWÓD OSOBISTY',
@@ -352,6 +417,23 @@ client.on(Events.InteractionCreate, async interaction => {
       });
 
       await targetChannel.send({ embeds: [embed] });
+      
+      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (member) {
+        const roleId = '1505614464819531783';
+        const role = guild.roles.cache.get(roleId);
+        if (role) {
+          await member.roles.add(role).catch(() => null);
+        }
+
+        const newNick = `${imie} ${nazwisko} (z dowodu) | ${interaction.user.username}`;
+        if (newNick.length <= 32) {
+          await member.setNickname(newNick).catch(() => null);
+        } else {
+          await member.setNickname(`${imie} ${nazwisko} (z dowodu)`).catch(() => null);
+        }
+      }
+      
       return interaction.reply({ content: 'Twój dowód osobisty został pomyślnie wyrobiony i przesłany do urzędu!', ephemeral: true });
     }
   } catch (error) {
